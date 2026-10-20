@@ -3,7 +3,7 @@
 ## Installation ##
 
 1. Ensure [Git](https://github.com/git-guides/install-git) and [Anaconda](https://www.anaconda.com/download) (or [Miniconda](https://docs.anaconda.com/miniconda/)) are installed on your computer.  
-2. If you wish to run the Segment Anything model on GPU, ensure [CUDA](https://docs.nvidia.com/cuda/) is installed on your machine. CUDA is not necessary to run Segment Anything on your computer's CPU, but the program will run much slower. 
+2. If you wish to run the Segment Anything model on GPU, ensure an [NVIDIA driver](https://www.nvidia.com/en-us/drivers/) supporting CUDA 12.8 (driver version 570 or newer) is installed on your machine. You do not need to install the CUDA toolkit separately, since PyTorch ships with its own CUDA runtime. A GPU is not necessary to run Segment Anything, but the program will run much slower on CPU.
 3. Clone the Vesicle Picker repository:  
 	```
 	git clone https://github.com/r-karimi/vesicle-picker.git
@@ -14,33 +14,32 @@
 	```
 5. Create a clean conda virtual environment.
 	```
-	conda create -n vesicle-picker
+	conda create -n vesicle-picker python=3.11
  	conda activate vesicle-picker
  	conda install pip
  	```
-6. Edit the [`pyproject.toml`](pyproject.toml) file in the base directory to install the correction version of PyTorch, PyTorch vision, and PyTorch audio for your computer. These instructions differ based on whether you are installing PyTorch for CPU or GPU usage.
-
-	### CPU Installation ###
-	- Visit the [PyTorch](https://pytorch.org/get-started/locally/) installation page and select the appropriate options, ensuring that Pip is selected as the package manager and CPU is selected as the compute platform. Note the given install command, but do not run it.
- 
-	- Modify `install-pytorch` in `pyproject.toml` with the install command noted above:
-		```
- 		# Example: CPU
- 		install-pytorch = "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
- 		```
+6. Check that the PyTorch install command in [`pyproject.toml`](pyproject.toml) suits your computer. By default, `install-pytorch` installs PyTorch built for CUDA 12.8, which supports both NVIDIA A100 (Ampere) and RTX PRO 6000 (Blackwell) GPUs, as well as most other recent NVIDIA GPUs:
+	```
+	install-pytorch = "pip install 'torch>=2.7' 'torchvision>=0.22' --index-url https://download.pytorch.org/whl/cu128"
+	```
 
 	### GPU Installation ###
-	- Note your version of CUDA and Python by running:
+	- Check your NVIDIA driver version and GPU by running:
 		```
-		nvcc --version
-		python --version
+		nvidia-smi
 		```
-	- Browse the [PyTorch wheels](https://download.pytorch.org/whl/torch/) to find the appropriate versions of PyTorch, PyTorch vision, and PyTorch audio for your installed versions of CUDA and Python (e.g. `cu118` for CUDA 11.8 and `cp39` for Python 3.9).
- 
-	- Modify the `install-pytorch` command in `pyproject.toml` to match these versions:
+	- If the driver version is 570 or newer, keep the default command above. This is required for Blackwell GPUs such as the RTX PRO 6000, which are only supported by PyTorch 2.7 or newer built for CUDA 12.8. Older builds (e.g. `cu118`) will fail on these GPUs with `no kernel image is available for execution on the device`.
+	- If the driver is older than 570 and cannot be updated, the CUDA 12.8 build will not run. On older GPUs such as the A100, you can instead use a build for an older CUDA version supported by your driver (see the [PyTorch installation page](https://pytorch.org/get-started/locally/)), for example:
 		```
- 		# Example: Python 3.9.X and CUDA 11.8
- 		install-pytorch = "pip install torch==2.1.1+cu118 torchvision==0.16.1+cu118 torchaudio==2.1.1+cu118 -f https://download.pytorch.org/whl/torch_stable.html"
+		# Example: CUDA 12.6 (driver 560 or newer). Does not support Blackwell GPUs.
+		install-pytorch = "pip install 'torch>=2.7' 'torchvision>=0.22' --index-url https://download.pytorch.org/whl/cu126"
+		```
+	- If you share one environment across machines with different GPUs (e.g. A100 and RTX PRO 6000 nodes on a cluster), use the default CUDA 12.8 build and make sure all machines have driver 570 or newer.
+
+	### CPU Installation ###
+	- Modify `install-pytorch` in `pyproject.toml` to install the CPU build of PyTorch:
+		```
+ 		install-pytorch = "pip install 'torch>=2.7' 'torchvision>=0.22' --index-url https://download.pytorch.org/whl/cpu"
  		```
   
 8. Install `vesicle-picker` and dependencies:
@@ -48,6 +47,11 @@
 	pip install .
 	poe install-pytorch
  	```
+	To confirm that PyTorch can use your GPU, run:
+	```
+	python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0)); print(torch.ones(1, device='cuda') + 1)"
+	```
+	This should print `True`, your GPU name, and `tensor([2.], device='cuda:0')` without errors or warnings about an unsupported CUDA capability.
 9. Download the Segment Anything [model weights](https://github.com/facebookresearch/segment-anything#model-checkpoints) from the Segment Anything GitHub page and place them in the `vesicle-picker` repository. We recommend trying with the ViT-L model weights first.
 10. Modify csparc_login.ini to match the active cryoSPARC instance from which micrographs will be imported into Vesicle Picker and into which particle locations will be exported. Vesicle Picker requires cryoSPARC v5, and the installed `cryosparc-tools` version must match your cryoSPARC version (e.g. `pip install cryosparc-tools~=5.0.0` for cryoSPARC v5.0.x). A license ID is no longer required. Instead of storing your password in `csparc_login.ini`, you may leave `email` and `password` blank and log in once with `python -m cryosparc.tools login`.
 

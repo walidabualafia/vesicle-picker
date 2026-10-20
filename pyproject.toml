@@ -20,8 +20,8 @@ tqdm = "^4.66.1"
 jupyter = "^1.0.0"
 primefac = "^2.0.12"
 
-[tool.poe.tasks] # Change the line below to meet your specific environment. Currently configured for CUDA 11.8
-install-pytorch = "pip install torch==2.3.1+cu118 torchvision==0.18.1+cu118 torchaudio==2.3.1+cu118 -f https://download.pytorch.org/whl/torch_stable.html"
+[tool.poe.tasks] # Change the line below to meet your specific environment. Currently configured for CUDA 12.8, which supports both A100 and RTX PRO 6000 (Blackwell) GPUs. Requires NVIDIA driver 570 or newer.
+install-pytorch = "pip install 'torch>=2.7' 'torchvision>=0.22' --index-url https://download.pytorch.org/whl/cu128"
 
 [build-system]
 requires = ["poetry-core"]
