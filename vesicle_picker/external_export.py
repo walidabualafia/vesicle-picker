@@ -29,12 +29,13 @@ def construct_csparc_dataset(micrograph, pick_indices):
     # Define the number of picks explicitly
     n_picks = len(pick_indices[0])
 
-    # Extract micrograph information
-    micrograph_uid = micrograph.to_list()[0]
-    micrograph_path = micrograph.to_list()[1]
-    micrograph_exposure_group = micrograph.to_list()[2]
+    # Extract micrograph information by field name, since the field order
+    # of loaded outputs is not guaranteed across CryoSPARC versions
+    micrograph_uid = micrograph['uid']
+    micrograph_path = micrograph['micrograph_blob/path']
+    micrograph_exposure_group = micrograph['mscope_params/exp_group_id']
     micrograph_shape = micrograph['micrograph_blob/shape']
-    micrograph_psize = micrograph.to_list()[4]
+    micrograph_psize = micrograph['micrograph_blob/psize_A']
 
     # Initialize a Dataset to hold these particle picks
     pick_dataset = Dataset([
@@ -81,10 +82,10 @@ def export_to_csparc(cs, pick_dataset, project_id, workspace_id):
     # Tell the job what kind of output to expect
     job.add_output("particle", "vesicle_picks", slots=["location"])
 
-    # Start the job, push the output to cryosparc, stop the job
-    job.start()
-    job.save_output("vesicle_picks", pick_dataset)
-    job.stop()
+    # Start the job, push the output to cryosparc, stop the job.
+    # job.run() marks the job as failed if saving the output raises.
+    with job.run():
+        job.save_output("vesicle_picks", pick_dataset)
 
 
 def export_masks_to_disk(masks, filename, micrograph_uid=None,

@@ -25,13 +25,17 @@ def load_cryosparc(csparc_login_path):
     # Read the cryosparc login credentials
     config = read_config(csparc_login_path)
 
-    # Initialize a cryosparc object
+    # Initialize a cryosparc object. CryoSPARC v5 no longer uses the
+    # license ID for authentication, so it is not passed here. If email
+    # and password are left blank, cryosparc-tools falls back to a saved
+    # session created with `python -m cryosparc.tools login`.
     cs = CryoSPARC(
-        license=config.get('General', 'license'),
         host=config.get('General', 'host'),
         base_port=int(config.get('General', 'base_port')),
-        email=config.get('UserCredentials', 'email'),
-        password=config.get('UserCredentials', 'password')
+        email=config.get('UserCredentials', 'email', fallback=None) or None,
+        password=(
+            config.get('UserCredentials', 'password', fallback=None) or None
+        )
     )
 
     # Test the connection to cryosparc

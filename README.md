@@ -49,7 +49,7 @@
 	poe install-pytorch
  	```
 9. Download the Segment Anything [model weights](https://github.com/facebookresearch/segment-anything#model-checkpoints) from the Segment Anything GitHub page and place them in the `vesicle-picker` repository. We recommend trying with the ViT-L model weights first.
-10. Modify csparc_login.ini to match the active cryoSPARC instance from which micrographs will be imported into Vesicle Picker and into which particle locations will be exported.
+10. Modify csparc_login.ini to match the active cryoSPARC instance from which micrographs will be imported into Vesicle Picker and into which particle locations will be exported. Vesicle Picker requires cryoSPARC v5, and the installed `cryosparc-tools` version must match your cryoSPARC version (e.g. `pip install cryosparc-tools~=5.0.0` for cryoSPARC v5.0.x). A license ID is no longer required. Instead of storing your password in `csparc_login.ini`, you may leave `email` and `password` blank and log in once with `python -m cryosparc.tools login`.
 
 ## Usage ##
 

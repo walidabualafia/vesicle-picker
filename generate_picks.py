@@ -112,7 +112,7 @@ job = project.create_external_job(
 # Tell the job what kind of output to expect
 job.add_output("particle", "vesicle_picks", slots=["location"])
 
-# Start the job, push the output to cryosparc, stop the job
-job.start()
-job.save_output("vesicle_picks", vesicle_picks)
-job.stop()
+# Start the job, push the output to cryosparc, stop the job.
+# job.run() marks the job as failed if saving the output raises.
+with job.run():
+    job.save_output("vesicle_picks", vesicle_picks)
